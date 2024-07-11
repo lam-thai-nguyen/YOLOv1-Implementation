@@ -1,5 +1,5 @@
 """
-Last edited on: Jul 9, 2024
+Last edited on: Jul 11, 2024
 by: Lam Thai Nguyen
 """
 
@@ -65,6 +65,58 @@ def test_IoU():
     assert iou.size() == (2, 7, 7, 1)
     
     
+def NMS(boxes, confidence_threshold, IoU_threshold):
+    """
+    Non-max suppression
+
+    Args:
+        boxes (list): each entry is [class_label, confidence, x, y, w, h]
+        confidence_threshold (float): cutoff confidence
+        IoU_threshold (float): cutoff IoU
+    Returns:
+        remaining_boxes (list)
+    """
+    # Confidence threshold
+    boxes = [box for box in boxes if box[1] > confidence_threshold]
+    boxes = sorted(boxes, key=lambda x : x[1], reverse=True)
+    remaining_boxes = []
+    
+    # IoU threshold
+    while boxes:
+        # Pick the box with the highest confidence
+        highest_confidence_box = boxes.pop(0)
+        
+        # Discard remaining boxes with IoU(highest_confidence_box, examined_box) >= IoU_threshold
+        for examined_box in boxes:
+            # If the examined box has the same class label as the highest_confidence_box
+            if examined_box[0] == highest_confidence_box[0]:
+                iou = IoU(torch.tensor(highest_confidence_box[2:]), torch.tensor(examined_box[2:]))
+                if iou >= IoU_threshold:
+                    boxes.remove(examined_box)
+    
+        remaining_boxes.append(highest_confidence_box)
+    
+    return remaining_boxes
+    
+    
+def test_NMS():
+    boxes = [
+        [2, 0.8, 0.55, 0.66, 0.3, 0.5],
+        [2, 0.9, 0.6, 0.7, 0.3, 0.5],
+        [2, 0.3, 0., 0., 0., 0.],
+        [3, 0.87, 0.6, 0.85, 0.6, 0.5],
+        [3, 0.66, 0.65, 0.75, 0.6, 0.5],
+    ]
+    
+    remaining_boxes = NMS(boxes, 0.6, 0.5)
+    assert len(remaining_boxes) == 2
+    
+
+def mAP():
+    ...
+    
+    
 if __name__ == "__main__":
     test_IoU()
+    test_NMS()
     
