@@ -1,5 +1,5 @@
 """
-Last edited on: Jul 12, 2024
+Last edited on: Jul 13, 2024
 by: Lam Thai Nguyen
 """
 
@@ -207,6 +207,17 @@ def test_mAP():
     mAP_value = mAP(pred_boxes, true_boxes, IoU_threshold=0.5, num_classes=2)
     assert 0. <= mAP_value <= 1.
      
+
+def save_checkpoint(obj, PATH):
+    print("==>> Saving checkpoint")
+    torch.save(obj, PATH)
+    
+    
+def load_checkpoint(checkpoint, model, optimizer):
+    print("==>> Loading checkpoint")
+    model.load_state_dict(checkpoint["state_dict"])
+    optimizer.load_state_dict(checkpoint["optimizer"])
+    
     
 if __name__ == "__main__":
     test_IoU()
