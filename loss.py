@@ -1,5 +1,5 @@
 """
-Last edited on: Jul 9, 2024
+Last edited on: Jul 13, 2024
 by: Lam Thai Nguyen
 """
 
@@ -16,6 +16,7 @@ class YOLOv1Loss(nn.Module):
         self.mse = nn.MSELoss(reduction="sum")
         
     def forward(self, pred, true):
+        pred = pred.reshape(-1, 7, 7, 30)
         # YOLOv1 Loss function has 4 parts
         
         # Calculate IoU from (x, y, w, h)
