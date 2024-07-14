@@ -1,5 +1,5 @@
 """
-Last edited on: Jul 8, 2024
+Last edited on: Jul 14, 2024
 by: Lam Thai Nguyen
 """
 
@@ -41,7 +41,7 @@ class VOCDataset(Dataset):
                 boxes.append(line[:-2])
                 
         if self.transform:
-            image = self.transform(image)
+            image, boxes = self.transform(image, boxes) 
             
         label = self._encode_box(boxes)
         
@@ -61,7 +61,7 @@ class VOCDataset(Dataset):
         S = 7  # number of grid cells
         B = 2  # number of predictions per cell
         C = 20  # number of classes
-        label = torch.zeros((S, S, C + 5))
+        label = torch.zeros((S, S, C + 5*B))
         
         for box in boxes:
             values = box.split(" ")
@@ -92,7 +92,7 @@ def test():
     dataset = VOCDataset("data/8examples.csv", "data")
     assert len(dataset) == 8, "Unexpected length."
     img1, label1 = dataset[0]
-    assert label1.size() == (7, 7, 25), "Unexpected size"
+    assert label1.size() == (7, 7, 30), "Unexpected size"
     
     plt.figure(figsize=(8, 8))
     plt.imshow(img1)
