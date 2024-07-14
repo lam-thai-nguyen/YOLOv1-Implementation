@@ -3,6 +3,7 @@ from torchvision.transforms import transforms
 from torch.utils.data import DataLoader
 import torch.optim as optim
 from tqdm import tqdm
+from matplotlib import pyplot as plt
 
 from model import YOLOv1
 from dataset import VOCDataset
@@ -18,12 +19,13 @@ LEARNING_RATE = 2e-5
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 BATCH_SIZE = 16
 WEIGHT_DECAY = 0
-EPOCHS = 20
+EPOCHS = 10
 NUM_WORKERS = 2
 PIN_MEMORY = True
 ROOT_DIR = "data"
-LOAD_MODEL = False
-LOAD_MODEL_FILE = ""
+LOAD_MODEL = True
+LOAD_MODEL_FILE = "checkpoints/overfit_8_examples.pth.tar"
+
 
 class Compose:
     def __init__(self, transforms):
@@ -47,13 +49,13 @@ transform = Compose(
 def train_one_epoch(train_loader, model, optimizer, loss_fn):
     model.train()
     loop = tqdm(train_loader, leave=True)
-    mean_loss = []
+    losses = []
 
     for _, (x, y) in enumerate(loop):
         x, y = x.to(DEVICE), y.to(DEVICE)
         output = model(x)
         loss = loss_fn(output, y)
-        mean_loss.append(loss.item())
+        losses.append(loss.item())
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -61,8 +63,11 @@ def train_one_epoch(train_loader, model, optimizer, loss_fn):
         # update progress bar
         loop.set_postfix(loss=loss.item())
 
-    print(f"Mean loss was {sum(mean_loss)/len(mean_loss)}")
+    mean_loss = sum(losses) / len(losses)
+    print(f"==>> mean_loss: {mean_loss}")
     
+    return mean_loss
+
 
 def main():
     # ============ #
@@ -84,7 +89,7 @@ def main():
     #    Dataset   #
     # ============ #
     train_dataset = VOCDataset(
-        csv_file="data/100examples.csv",
+        csv_file="data/8examples.csv",
         root_dir=ROOT_DIR,
         transform=transform
     )
@@ -104,7 +109,7 @@ def main():
         shuffle=True,
         num_workers=NUM_WORKERS,
         pin_memory=PIN_MEMORY,
-        drop_last=True
+        drop_last=False
     )
     
     test_loader = DataLoader(
@@ -118,9 +123,27 @@ def main():
     # ============ #
     #   Training   #
     # ============ #
+    losses = []
     for epoch in range(EPOCHS):
         print(f"==>> Epoch {epoch}")
-        train_one_epoch(train_loader, model, optimizer, loss_fn)
+        loss = train_one_epoch(train_loader, model, optimizer, loss_fn)
+        losses.append(loss)
+    
+        # Plotting
+        plt.figure(figsize=(8, 8))
+        plt.plot(losses)
+        plt.xlabel("Epoch")
+        plt.ylabel("Cost")
+        plt.title("Cost per Epoch")
+        plt.tight_layout()
+        plt.savefig("images/cost_epoch.jpg")
+        plt.close()
+    
+    checkpoint = {
+        "state_dict": model.state_dict(),
+        "optimizer": optimizer.state_dict()
+    }
+    save_checkpoint(obj=checkpoint, PATH=LOAD_MODEL_FILE)
         
 
 if __name__ == "__main__":
