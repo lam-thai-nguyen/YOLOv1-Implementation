@@ -3,7 +3,7 @@
 # ================================================================================= #
 
 """
-Last edited on: Jul 6, 2024
+Last edited on: Jul 14, 2024
 by: Lam Thai Nguyen
 """
 
@@ -70,10 +70,10 @@ class YOLOv1(nn.Module):
         
         self.classifier = nn.Sequential(
             nn.Flatten(),  # flatten from (N, C, H, W) to (N, -1)
-            nn.Linear(in_features=1024*7*7, out_features=4096),
+            nn.Linear(in_features=1024*7*7, out_features=496),  # paper out_features is 4096, use 496 instead for computational purposes
             nn.LeakyReLU(0.1),
             nn.Dropout(p=0.5),
-            nn.Linear(in_features=4096, out_features=7*7*30)  # the predictions are encoded as (SxSx(B*5+C)). Here, B=2, C=20.
+            nn.Linear(in_features=496, out_features=7*7*30)  # the predictions are encoded as (SxSx(B*5+C)). Here, B=2, C=20.
         )
     
     def forward(self, x):
