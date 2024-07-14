@@ -1,5 +1,5 @@
 """
-Last edited on: Jul 13, 2024
+Last edited on: Jul 14, 2024
 by: Lam Thai Nguyen
 """
 
@@ -44,13 +44,23 @@ class YOLOv1Loss(nn.Module):
             I_1 * (box1_mask * pred[..., 22:23] + box2_mask * pred[..., 27:28]),
             I_1 * true[..., 22:23]
         )
+        
+        # For width and height, take square root
+        pred_sqrt_w = torch.sqrt(torch.abs(pred[..., 23:24] + 1e-6)) * box1_mask \
+                    + torch.sqrt(torch.abs(pred[..., 28:29] + 1e-6)) * box2_mask
+        true_sqrt_w = torch.sqrt(true[..., 23:24])
+
+        pred_sqrt_h = torch.sqrt(torch.abs(pred[..., 24:25] + 1e-6)) * box1_mask \
+                    + torch.sqrt(torch.abs(pred[..., 29:30] + 1e-6)) * box2_mask
+        true_sqrt_h = torch.sqrt(true[..., 24:25])
+
         error_1_3 = self.mse(
-            I_1 * (box1_mask * torch.sqrt(pred[..., 23:24]) + box2_mask * torch.sqrt(pred[..., 28:29])),
-            I_1 * torch.sqrt(true[..., 23:24])
+            I_1 * pred_sqrt_w,
+            I_1 * true_sqrt_w
         )
         error_1_4 = self.mse(
-            I_1 * (box1_mask * torch.sqrt(pred[..., 24:25]) + box2_mask * torch.sqrt(pred[..., 29:30])),
-            I_1 * torch.sqrt(true[..., 24:25])
+            I_1 * pred_sqrt_h,
+            I_1 * true_sqrt_h
         )
         
         loss_1 = self.lambda_coord * (error_1_1 + error_1_2 + error_1_3 + error_1_4)
